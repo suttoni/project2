@@ -1,4 +1,5 @@
-/* Main data header file - this contains all the necessary information 
+/* 
+   Main data header file - this contains all the necessary information 
    for elevator_module.c, *insert other files as created* 
    Author: Ian Sutton
    FSUID: iss13
@@ -55,7 +56,7 @@ struct elevator_info{
 	elev_movement_state state;
 	int currentFloor;
 	int destinationFloor;
-	int usedSpace;
+	double usedSpace;
 	bool continueRun;
 	struct list_head passengers;
 };
@@ -63,7 +64,7 @@ struct elevator_info{
 struct passenger_info{
 	int currFloor;
 	int destFloor;
-	char passengerType;
+	int passengerType;
 	struct list_head passengerList;
 };
 
@@ -73,17 +74,19 @@ struct floor_info{
 	struct list_head queue;
 };
 
-/* Have yet to create a file to contain definitions for these */
-long start_elevator(void);
-long issue_request(char pass_type, int start_floor, int desired_floor);
-long stop_elevator(void);
+/* Function declarations */
 
-/* Have yet to create a file to contain definitions for these */
+//Definitions found in module_data.c - STUBs/syscalls created in elevator_syscalls.c
+int issue_request(int pass_type, int start_floor, int desired_floor);
+int start_elevator(void);
+int stop_elevator(void);
+
+//Definitions found in elevator_passenger.c
 int remove_passengers(void);
 int add_passengers(void);
 int elevator_service(void * info);
 
-/* Function definitions are located in elevator_module.c */
+//Definitions found in elevator_module.c
 int show_elevator_data(struct seq_file *m, void *v);
 int open_elevator(struct inode *inode, struct file *file);
 int __exit exit_elevator(void);
