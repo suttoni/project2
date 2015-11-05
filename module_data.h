@@ -73,20 +73,17 @@ struct floor_info{
 	struct list_head queue;
 };
 
-/* 
-	Function declarations - definitions are in the following
-	files: elevator_module.c
-  *insert file names as files are created*
-*/
-
+/* Have yet to create a file to contain definitions for these */
 long start_elevator(void);
 long issue_request(char pass_type, int start_floor, int desired_floor);
 long stop_elevator(void);
 
+/* Have yet to create a file to contain definitions for these */
 int remove_passengers(void);
 int add_passengers(void);
 int elevator_service(void * info);
 
+/* Function definitions are located in elevator_module.c */
 int show_elevator_data(struct seq_file *m, void *v);
 int open_elevator(struct inode *inode, struct file *file);
 int __exit exit_elevator(void);
