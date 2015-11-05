@@ -6,16 +6,21 @@
 extern struct elevator_info elevator;
 extern struct floor_info floors[NUM_FLOORS];
 extern int deliveredAdults,
-	   deliveredChildren,
-	   deliveredBellhops,
-	   deliveredRoomService;
+      	    deliveredChildren,
+	    deliveredBellhops,
+	    deliveredRoomService;
 extern struct mutex elevatorLock;
 extern struct mutex floorLock;
 
-//Stubs i changed from 'long' to 'int'
+/* 
+	Stubs - we get these from our syscall file elevator_syscalls.c and
+	are implemented in module_data.h
+*/
+
+extern int(* STUB_issue_request)(int pass_type, int start_floor, int desired_floor);
 extern int(* STUB_start_elevator)(void);
 extern int(* STUB_stop_elevator)(void);
-extern int(* STUB_request_elevator)(char pass_type, int start_floor, int desired_floor);
+
 
 //Struct for file_operations
 const struct file_operations elevator_fops = {
@@ -211,5 +216,7 @@ int show_elevator_data(struct seq_file *m, void *v){
 	return 0;
 }
 	
+
+
 module_init(init_elevator);
 module_exit(exit_elevator);
