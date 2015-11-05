@@ -7,7 +7,7 @@
 #include <linux/syscalls.h>
 
 /* 
-	Here, we define our STUBs for the syscalls - these STUBs are 
+    Here, we define our STUBs for the syscalls - these STUBs are 
     needed in elevator_module.c.
     The syscalls themselves are implemented in module_data.c 
 */
@@ -17,8 +17,8 @@ int (* STUB_start_elevator)( void ) = NULL;
 int (* STUB_stop_elevator)( void ) = NULL;
 
 /* 
-	We need to export these STUBs, so we use EXPORT_SYMBOL 
-	from library linux/export.h
+    We need to export these STUBs, so we use EXPORT_SYMBOL 
+    from library linux/export.h
 */
 
 EXPORT_SYMBOL(STUB_issue_request);
