@@ -64,7 +64,7 @@ struct elevator_info{
 struct passenger_info{
 	int currFloor;
 	int destFloor;
-	int passengerType;
+	int passengerType;		//changed passengerType from char to int
 	struct list_head passengerList;
 };
 
