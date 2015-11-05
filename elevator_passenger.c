@@ -2,9 +2,9 @@
 
 //External information
 extern int deliveredAdults,
-		   deliveredChildren,
-		   deliveredBellhops,
-		   deliveredRoomService;
+	   deliveredChildren,
+	   deliveredBellhops,
+	   deliveredRoomService;
 extern struct mutex elevatorLock;
 extern struct mutex floorLock;
 extern struct task_struct *elevatorThread;
