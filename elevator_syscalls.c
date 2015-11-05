@@ -1,4 +1,7 @@
-/* This is a file that contains our syscalls for elevator module */
+/* This is a file that contains our syscalls for elevator module 
+   Author: Ian Sutton
+   Team mates: Yilin Wang, Ibrahim Atiya, Sai Gunesagaran
+*/
 
 //Include needed libraries
 #include <linux/kernel.h>
