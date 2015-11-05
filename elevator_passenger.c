@@ -2,9 +2,9 @@
 
 //External information
 extern int deliveredAdults,
-	   deliveredChildren,
-	   deliveredBellhops,
-	   deliveredRoomService;
+		   deliveredChildren,
+		   deliveredBellhops,
+		   deliveredRoomService;
 extern struct mutex elevatorLock;
 extern struct mutex floorLock;
 extern struct task_struct *elevatorThread;
@@ -17,9 +17,12 @@ int remove_passengers(void){
 	struct list_head *position, *q;
 	struct passenger_info *info;
 
+	//Go through the list of passengers - as each passenger is unloaded, subtract their weight
 	list_for_each(position, q, &elevator.passengers){
 		info = list_entry(position, struct passenger_info, passenger_list);
 		switch (info->passengerType){
+
+			//Each passenger has a different weight type: A has 1, C has 0.5, B & R have 2
 			case 'A':
 				elevator.usedSpace -= 1;
 				deliveredAdults++;
@@ -56,11 +59,14 @@ int add_passengers(void){
 	int added = 0;
 	struct list_head *position, *q;
 	struct passenger_info *info;
-
+	
+	//Go through the list of passengers - as each passenger is loaded, add their weight
 	list_for_each_safe(position, q, &floors[elevator.currentFloor - 1].queue){
 		info = list_entry(position, struct passenger_info, passenger_list);
 		if(elevator.usedSpace < MAX_PASSENGERS){
 			switch (info->passengerType){
+				
+				//Each passenger has a different weight type: A has 1, C has 0.5, B & R have 2
 				case 'A':
 					if((elevator.usedSpace + 1) <= MAX_PASSENGERS){
 						elevator.usedSpace += 1;
