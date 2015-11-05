@@ -6,9 +6,9 @@
 extern struct elevator_info elevator;
 extern struct floor_info floors[NUM_FLOORS];
 extern int deliveredAdults,
-      	    deliveredChildren,
-	    deliveredBellhops,
-	    deliveredRoomService;
+      	   deliveredChildren,
+	   deliveredBellhops,
+	   deliveredRoomService;
 extern struct mutex elevatorLock;
 extern struct mutex floorLock;
 
