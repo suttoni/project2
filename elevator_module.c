@@ -1,4 +1,8 @@
-/**/
+/* This initializes the elevator, exits the elevator, performs procfs entry 
+   by using function show_elevator_data which uses seq_printf to print to proc file
+   Author: Ian Sutton
+   Team mates: Yilin Wang, Sai Gunesagaran, Ibrahim Atiya 
+*/
 #include "module_data.h"
 
 
