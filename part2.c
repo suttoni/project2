@@ -21,7 +21,7 @@ MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Sutton");
 MODULE_DESCRIPTION("my_xTime module");
 
-#define ENTRY_NAME "my_xTime"
+#define ENTRY_NAME "timed"
 #define PERMS 0644
 #define PARENT NULL
 
@@ -32,7 +32,7 @@ static struct proc_dir_entry *proc_entry;
 int init_my_xtime_module( void ){
 	int retVal = 0;
 
-	proc_entry = create_proc_entry("timed", 0444, NULL);
+	proc_entry = create_proc_entry(ENTRY_NAME, 0644, NULL);
 
 	if (proc_entry == NULL){
 		ret = -ENOMEM;
@@ -49,7 +49,7 @@ int init_my_xtime_module( void ){
 }
 
 void cleanup_my_xtime_module(void){
-	remove_proc_entry("timed", &proc_root);
+	remove_proc_entry(ENTRY_NAME, &proc_root);
 	printk(KERN_INFO "xtime: Module unloaded. \n");
 }
 
