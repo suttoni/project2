@@ -1,6 +1,6 @@
-TARG = elevator_mod
+TARGET = elevator_mod
 elevator_mod-objs := module_data.o elevator_module.o elevator_passenger.o
-obj-m := $(TARG).o
+obj-m := $(TARGET).o
 obj-y := elevater_syscalls.o
 
 KDIR :=/lib/modules/4.2.0/build
