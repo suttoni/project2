@@ -1,13 +1,27 @@
-TARGET = elevator_mod
-elevator_mod-objs := module_data.o elevator_module.o elevator_passenger.o
-obj-m := $(TARGET).o
-obj-y := elevater_syscalls.o
+MODULE_NAME = elevator
 
-KDIR :=/lib/modules/4.2.0/build
 PWD := $(shell pwd)
 
+
+#KDIR := /lib/modules/$(shell uname -r)/build
+
+KDIR := /lib/modules/4.2.0/build
+
+ccflags-y += -I$(src)/include
+
+obj-y := elevator_syscalls.o
+
+$(MODULE_NAME)-objs += elevator_module.o 
+$(MODULE_NAME)-objs += elevator_passenger.o
+$(MODULE_NAME)-objs += module_data.o
+
+obj-m := $(MODULE_NAME).o
+
+
 default:
+
 	$(MAKE) -C $(KDIR) SUBDIRS=$(PWD) modules
 
 clean:
+
 	$(MAKE) -C $(KDIR) SUBDIRS=$(PWD) clean
