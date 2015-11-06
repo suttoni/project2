@@ -4,10 +4,8 @@
 
    Take difference of two time values when read exists
 
-   Author: Ian Sutton
-   FSUID: iss13
    Team: Satisfries SP3
-   Team Members: Yilin Wang, Sai Gunasegaran, Ian Sutton
+   Team Members: Yilin Wang, Sai Gunasegaran, Ian Sutton, Ibrahim Atiya
 */
 
 #include <linux/init.h>
@@ -56,23 +54,7 @@ void cleanup_my_xtime_module(void){
 }
 
 int my_xtime_read(char *page, char **start, off_t off, int count, int *eof, void *data){
-	int len;
-	unsigned seq;
-	struct timespec curTime;
-
-	if (off > 0){
-		*eof = 1;
-		return 0;
-	}
-
-	do{
-		seq = read_seqbegin(&xtime_lock);
-		curTime = xtime;
-	} while (read_seqretry(&xtime_lock, seq));
-
-	len = sprint(page, "%d %d \n", (int) curTime.tv_sec, (int) curTime.tv_nsec);
-
-	return len;
+	
 }
 
 module_init(init_my_xtime_module);
