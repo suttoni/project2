@@ -1,114 +1,203 @@
 #include "module_data.h"
 
 //External information
-extern int deliveredAdults,
-	   deliveredChildren,
-	   deliveredBellhops,
-	   deliveredRoomService;
+struct task_struct *elevatorThread;
+struct elevator_info elevator;
+struct passenger_info passenger;
+struct floor_info *floors;
+
 extern struct mutex elevatorLock;
 extern struct mutex floorLock;
-extern struct task_struct *elevatorThread;
-extern struct elevator_info elevator;
-extern struct floor_info floors[NUM_FLOORS];
-
 
 int remove_passengers(void){
 	int removed = 0;
-	struct list_head *position, *q;
+	struct list_head *position;
 	struct passenger_info *info;
+	deliveredAdults = 0;
+	deliveredChildren = 0;
+	deliveredBellhops = 0;
+	deliveredRoomService = 0;
 
-	//Go through the list of passengers - as each passenger is unloaded, subtract their weight
-	list_for_each(position, q, &elevator.passengers){
-		info = list_entry(position, struct passenger_info, passenger_list);
+	/*Go through the list of passengers - as each passenger is unloaded, subtract their weight*/
+	list_for_each(position, &elevator.passengers){
+		info = list_entry(position, struct passenger_info, passengerList);
 		switch (info->passengerType){
 
 			//Each passenger has a different weight type: A has 1, C has 0.5, B & R have 2
-			case 'A':
+			case 0: /*adult*/
 				elevator.usedSpace -= 1;
+				elevator.usedWeightUnit -= 2;
 				deliveredAdults++;
 				floors[elevator.currentFloor - 1].numPassServed++;
 				removed++;
 				break;
-			case 'C':
-				elevator.usedSpace -= 0.5;
+			case 1: /*child*/
+				elevator.usedSpace -= 1;
+				elevator.usedWeightUnit -= 1;
 				deliveredChildren++;
 				floors[elevator.currentFloor - 1].numPassServed++;
 				removed++;
 				break;
-			case 'B':
+			case 2: /*bellhop*/
 				elevator.usedSpace -= 2;
+				elevator.usedWeightUnit -= 4;
 				deliveredBellhops++;
 				floors[elevator.currentFloor - 1].numPassServed++;
 				removed++;
 				break;
-			case 'R':
-				elevator.usedSpace -= 2;
+			case 3: /*roomservice*/
+				elevator.usedSpace -= 1;
+				elevator.usedWeightUnit -= 4;
 				deliveredRoomService++;
 				floors[elevator.currentFloor - 1].numPassServed++;
 				removed++;
 				break;
-		}
+		}/*end switch*/
 		list_del(position);
 		kfree(info);
-	}
+	}/*end list_for_each*/
+	/*check if there are any passengers and adjust destination floor*/
+	if (elevator.usedSpace == 0)
+		elevator.destinationFloor = 0;
 
 	return removed;
-}
+}/*end remove_passengers*/
 
 int add_passengers(void){
 	int added = 0;
-	struct list_head *position, *q;
+	int numChecked;
+	elev_movement_state previous;
+	struct list_head *position;
+	struct list_head *q;
 	struct passenger_info *info;
-	
-	//Go through the list of passengers - as each passenger is loaded, add their weight
+	numChecked = 0;
+
+	/*Go through the list of passengers - as each passenger is loaded, add their weight*/
 	list_for_each_safe(position, q, &floors[elevator.currentFloor - 1].queue){
-		info = list_entry(position, struct passenger_info, passenger_list);
-		if(elevator.usedSpace < MAX_PASSENGERS){
-			switch (info->passengerType){
-				
-				//Each passenger has a different weight type: A has 1, C has 0.5, B & R have 2
-				case 'A':
-					if((elevator.usedSpace + 1) <= MAX_PASSENGERS){
-						elevator.usedSpace += 1;
-						list_del(position);
-						list_add(position, &elevator.passengers);
-						added++;
-					}
-					break;
-				case 'C':
-					if((elevator.usedSpace + 0.5) <= MAX_PASSENGERS){
-						elevator.usedSpace += 0.5;
-						list_del(position);
-						list_add(position, &elevator.passengers);
-						added++;
-					}
-					break;
-				case 'B':
-					if((elevator.usedSpace + 2) <= MAX_PASSENGERS){
-						elevator.usedSpace += 2;
-						list_del(position);
-						list_add(position, &elevator.passengers);
-						added++;
-					}
-					break;
-				case 'R':
-					if((elevator.usedSpace + 2) <= MAX_PASSENGERS){
-						elevator.usedSpace += 2;
-						list_del(position);
-						list_add(position, &elevator.passengers);
-						added++;
-					}
-					break;
-			}
-		}
+		info = list_entry(position, struct passenger_info, passengerList);
+		if(elevator.usedSpace < MAX_PASSENGERS && elevator.usedWeightUnit < MAX_LOAD){
 
-	return added;
-}
+			do
+			{			
+				if (elevator.usedSpace == 0) /*if there are no passengers*/
+				{ 
+					switch (info->passengerType)
+					{				
+						/*Each passenger has a different weight type: A has 1, C has 0.5, B & R have 2*/
+						case 0: /*adults*/
+							if((elevator.usedSpace + 1) <= MAX_PASSENGERS && (elevator.usedWeightUnit + 2) <= MAX_LOAD) 
+							{
+								elevator.usedSpace += 1;
+								elevator.usedWeightUnit += 2;
+								list_del(position);
+								list_add_tail(position, &elevator.passengers);
+								added++;
+								elevator.destinationFloor = info->destFloor;
+							}
+							break;
+						case 1: /*child*/
+							if((elevator.usedSpace + 1) <= MAX_PASSENGERS && (elevator.usedWeightUnit + 1) <= MAX_LOAD)
+							{
+								elevator.usedSpace += 1;
+								elevator.usedWeightUnit += 1;
+								list_del(position);
+								list_add_tail(position, &elevator.passengers);
+								added++;
+								elevator.destinationFloor = info->destFloor;
+							}
+							break;
+						case 2: /*bellhop*/
+							if((elevator.usedSpace + 2) <= MAX_PASSENGERS && (elevator.usedWeightUnit + 4) <= MAX_LOAD)
+							{
+								elevator.usedSpace += 2;
+								elevator.usedWeightUnit += 4;
+								list_del(position);
+								list_add_tail(position, &elevator.passengers);
+								added++;
+								elevator.destinationFloor = info->destFloor;
+							}
+							break;
+						case 3: /*roomservice*/
+							if((elevator.usedSpace + 1) <= MAX_PASSENGERS && (elevator.usedWeightUnit + 4) <= MAX_LOAD)
+							{
+								elevator.usedSpace += 1;
+								elevator.usedWeightUnit += 4;
+								list_del(position);
+								list_add_tail(position, &elevator.passengers);
+								added++;
+								elevator.destinationFloor = info->destFloor;
+							}
+							break;
+					}/*end switch*/
+				numChecked++;
 
-int elevator_service(void * info){
+
+				}/*end if*/
+				else /*people on the elevator*/
+				{
+					switch (info->passengerType)
+					{		
+						/*check if going in the same direction*/
+						if (((info->destFloor > elevator.currentFloor) && previous == UP) || 
+						    ((info->destFloor < elevator.currentFloor) && previous == DOWN))
+						{		
+							/*Each passenger has a different weight type: A has 1, C has 0.5, B & R have 2*/
+							case 0: /*adults*/
+								if((elevator.usedSpace + 1) <= MAX_PASSENGERS && (elevator.usedWeightUnit + 2) <= MAX_LOAD) ////////ACCOUNT FOR 	DIRECTION
+								{
+									elevator.usedSpace += 1;
+									elevator.usedWeightUnit += 2;
+									list_del(position);
+									list_add(position, &elevator.passengers);
+
+									added++;								
+								}
+								break;
+							case 1: /*child*/
+								if((elevator.usedSpace + 1) <= MAX_PASSENGERS && (elevator.usedWeightUnit + 1) <= MAX_LOAD)
+								{
+									elevator.usedSpace += 1;
+									elevator.usedWeightUnit += 1;
+									list_del(position);
+									list_add(position, &elevator.passengers);
+									added++;								
+								}
+								break;
+							case 2: /*bellhop*/
+								if((elevator.usedSpace + 2) <= MAX_PASSENGERS && (elevator.usedWeightUnit + 4) <= MAX_LOAD)
+								{
+									elevator.usedSpace += 2;
+									elevator.usedWeightUnit += 4;
+									list_del(position);
+									list_add(position, &elevator.passengers);
+									added++;								
+								}
+								break;
+							case 3: /*roomservice*/
+								if((elevator.usedSpace + 1) <= MAX_PASSENGERS && (elevator.usedWeightUnit + 4) <= MAX_LOAD)
+								{
+									elevator.usedSpace += 1;
+									elevator.usedWeightUnit += 4;
+									list_del(position);
+									list_add(position, &elevator.passengers);
+									added++;								
+								}
+								break;
+						}/*end if*/
+					}/*end switch*/
+				}/*end else*/					
+			/*keep checking passengers on that floor until full queue checked or full*/
+			}while(elevator.usedSpace < MAX_PASSENGERS && elevator.usedWeightUnit < MAX_LOAD && numChecked < floors[elevator.currentFloor - 1].queueWaiting);
+		}/*end if*/
+
+	}/*end list_for_each_safe*/	
+	return (added);
+}/*end add_passengers*/
+
+int elevator_service(void){
 
 	int changes;
-
+	
 	while(elevator.continueRun){
 
 		if(elevator.state == LOADING){
@@ -125,7 +214,8 @@ int elevator_service(void * info){
 				changes = 0;
 			//Loading passengers, wait for one second
 			msleep(1000);
-		}
+
+		}//end if
 
 		mutex_lock(&elevatorLock);
 
@@ -136,11 +226,13 @@ int elevator_service(void * info){
 			msleep(2000);
 
 			//We've reached our destination, change state to loading
-			if(elevator.destinationFloor == elevator.currentFloor){
+			//We want to use list_for_each to include passenger info struct
+			//to keep track of passenger's destination
+			if(elevator.destinationFloor == elevator.currentFloor){ 
 				elevator.state = LOADING;
 			}
 			elevator.currentFloor++;
-		}
+		}//end if
 		
 		//Our destination is below, wait 2 sec, decrement floor
 		else if(elevator.destinationFloor < elevator.currentFloor){
@@ -149,11 +241,13 @@ int elevator_service(void * info){
 			msleep(2000);
 
 			//We've reached our destination, change state to loading
-			if(elevator.destinationFloor == elevator.currentFloor){
+			//We want to use list_for_each to include passenger info struct
+			//to keep track of passenger's destination
+			if(elevator.destinationFloor == elevator.currentFloor){  
 				elevator.state = LOADING;
 			}
 			elevator.currentFloor--;
-		}
+		}//end else
 
 		//We're at our destination
 		else{
@@ -161,7 +255,7 @@ int elevator_service(void * info){
 			elevator.currentFloor = elevator.destinationFloor; 
 		}
 		mutex_unlock(&elevatorLock);
-	}
+	}//end while
 
 	//We're no longer running the elevator
 	elevator.state = IDLE;
@@ -170,7 +264,7 @@ int elevator_service(void * info){
 		//Unloading passengers
 		changes = 0;
 		mutex_lock(&elevatorLock);
-		remove_passengers();
+		remove_passengers();///////////////////////////////////////////////////////////
 		mutex_unlock(&elevatorLock);
 		msleep(1000);
 		mutex_lock(&elevatorLock);
@@ -178,10 +272,11 @@ int elevator_service(void * info){
 		elevator.destinationFloor = 0;
 		mutex_unlock(&elevatorLock);
 		msleep(1000);
-	}
+	}//end while
 
 	elevator.state = STOPPED;
 	kthread_stop(elevatorThread);
 
 	return 0;
 }
+
