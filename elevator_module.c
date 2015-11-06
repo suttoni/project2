@@ -4,17 +4,22 @@
    Team mates: Yilin Wang, Sai Gunesagaran, Ibrahim Atiya 
 */
 #include "module_data.h"
+#include <linux/init.h>
 
+MODULE_LICENSE("GPL");
+MODULE_AUTHOR("Sutton");
+MODULE_DESCRIPTION("Module for elevator scheduler");
 
-//External information
-extern struct elevator_info elevator;
-extern struct floor_info floors[NUM_FLOORS];
-extern int deliveredAdults,
-      	   deliveredChildren,
-	   deliveredBellhops,
-	   deliveredRoomService;
-extern struct mutex elevatorLock;
-extern struct mutex floorLock;
+int deliveredAdults,
+	deliveredChildren,
+	deliveredBellhops,
+	deliveredRoomService;
+
+extern struct inode *inode; 
+extern struct file *file;
+
+struct mutex elevatorLock = __MUTEX_INITIALIZER(elevatorLock);
+struct mutex floorLock = __MUTEX_INITIALIZER(floorLock);
 
 /* 
 	Stubs - we get these from our syscall file elevator_syscalls.c and
@@ -25,6 +30,9 @@ extern int(* STUB_issue_request)(int pass_type, int start_floor, int desired_flo
 extern int(* STUB_start_elevator)(void);
 extern int(* STUB_stop_elevator)(void);
 
+int elevator_open(struct inode *inode, struct file *file){
+	return single_open(file, show_elevator_data, NULL);
+}
 
 //Struct for file_operations
 const struct file_operations elevator_fops = {
@@ -34,16 +42,12 @@ const struct file_operations elevator_fops = {
 	.release = single_release,
 };
 
-int elevator_open(struct indode *inode, struct file *file){
-	return single_open(file, show_elevator_data, NULL);
-}
-
 /* Module function definitions */
 
 int __init init_elevator(void){
 	int i = 0;
 
-	STUB_request_elevator = &issue_request;
+	STUB_issue_request = &issue_request;
 	STUB_start_elevator = &start_elevator;
 	STUB_stop_elevator = &stop_elevator;
 
@@ -75,7 +79,8 @@ int __init init_elevator(void){
 }
 
 void __exit exit_elevator(void){
-	STUB_request_elevator = NULL;
+
+	STUB_issue_request = NULL;
 	STUB_start_elevator = NULL;
 	STUB_stop_elevator = NULL;
 
@@ -143,6 +148,9 @@ int show_elevator_data(struct seq_file *m, void *v){
 			case STOPPED:
 				stateOfElevator = stopped;
 				break;
+			default:
+				stateOfElevator = idle;
+				break;
 	}
 
 	//Print the state of the elevator
@@ -156,7 +164,7 @@ int show_elevator_data(struct seq_file *m, void *v){
 	*/
 	
 	list_for_each(position, &elevator.passengers){
-		info = list_entry(position, struct passenger_info, passenger_list);
+		info = list_entry(position, struct passenger_info, passengerList);
 		switch (info->passengerType){
 			case 0:
 				adults++;
@@ -199,7 +207,7 @@ int show_elevator_data(struct seq_file *m, void *v){
 
 		//Again, use "list_for_each" to iterate through the list
 		list_for_each(position, &floors[i].queue){
-			info = list_entry(position, struct passenger_info, passenger_list);
+			info = list_entry(position, struct passenger_info, passengerList);
 			switch (info->passengerType){
 				case 'A':
 					adults++;
@@ -225,7 +233,5 @@ int show_elevator_data(struct seq_file *m, void *v){
 	return 0;
 }
 	
-
-
 module_init(init_elevator);
 module_exit(exit_elevator);
