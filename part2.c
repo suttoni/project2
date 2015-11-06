@@ -19,12 +19,17 @@
 #include <asm-generic/uaccess.h>
 
 MODULE_LICENSE("GPL");
-MODULE_AUTHOR("Sutton");
+MODULE_AUTHOR("Sutton, Wang, Gunasegaran, Atiya");
 MODULE_DESCRIPTION("my_xTime module");
 
 #define ENTRY_NAME "timed"
 #define PERMS 0644
 #define PARENT NULL
+
+static struct timespec start, finish;
+static struct file_operations fops;
+
+
 
 int my_xtime_read(char *page, char **start, off_t off, int count, int *eof, void *data);
 
@@ -36,17 +41,32 @@ int init_my_xtime_module( void ){
 	proc_entry = create_proc_entry(ENTRY_NAME, 0644, NULL);
 
 	if (proc_entry == NULL){
-		ret = -ENOMEM;
+		retVal = -ENOMEM;
 		printk(KERN_INFO "my_xtime: Couldn't create proc entry\n");
 	}
 
 	else{
-		proc_entry->read_proc = my_xtime_read;
-		proc_entry->owner = THIS_MODULE;
+		fops.open = my_xtime_open;
+		fops.read = my_xtime_read;
+		fops.release = my_xtime_release;
 		printk(KERN_INFO "my_xtime: Module loaded.\n");
+		
+		if(!proc_create(ENTRY_NAME, PERMS, NULL, &fops))
+		{
+			printk("ERROR! proc_create\n");
+			remove_proc_entry(ENTRY_NAME, NULL);
+			return retVal = -ENOMEM;
+		}
+		return retVal;
 	}
 
 	return retVal;
+}
+
+static int my_xtime_release(struct inode* sp_inode, struct file* sp_file)
+{
+	printk("my_xtime called release\n");
+	
 }
 
 void cleanup_my_xtime_module(void){
