@@ -1,5 +1,7 @@
-/* 
-   Main data header file - this contains all the necessary information 
+//module_data.h
+
+
+/* Main data header file - this contains all the necessary information 
    for elevator_module.c, *insert other files as created* 
    Author: Ian Sutton
    FSUID: iss13
@@ -14,6 +16,8 @@
 #include <linux/kthread.h>
 #include <linux/types.h>
 #include <linux/delay.h>
+#include <linux/list.h>
+#include <linux/mutex.h>
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Sutton");
@@ -24,8 +28,15 @@ MODULE_DESCRIPTION("Data file that contains elevator information");
 
 #define NUM_FLOORS 10
 #define MAX_PASSENGERS 8
-#define MAX_LOAD 8
+#define MAX_LOAD 16
 
+extern struct elevator_info elevator;
+extern struct passenger_info passenger;
+extern struct floor_info *floors;
+extern int deliveredAdults,
+       	   deliveredChildren,
+	       deliveredBellhops,
+	       deliveredRoomService;
 /* 
    Enumeration for the current elevator state.
    The elevator can be IDLE, moving UP or DOWN,
@@ -34,12 +45,12 @@ MODULE_DESCRIPTION("Data file that contains elevator information");
    the "show_elevator_data" function that is defined
    in elevator_module.c
 */
-typedef enum{
-	IDLE = 0;
-	UP = 1;
-	DOWN = 2;
-	LOADING = 3;
-	STOPPED = 4;
+typedef enum {
+	IDLE = 0,
+	UP = 1,
+	DOWN = 2,
+	LOADING = 3,
+	STOPPED = 4,
 } elev_movement_state;
 
 /* 
@@ -56,15 +67,18 @@ struct elevator_info{
 	elev_movement_state state;
 	int currentFloor;
 	int destinationFloor;
-	double usedSpace;
+	int usedSpace;
+	int usedWeightUnit;
 	bool continueRun;
+	bool goingDown;
 	struct list_head passengers;
 };
 
 struct passenger_info{
 	int currFloor;
 	int destFloor;
-	int passengerType;		//changed passengerType from char to int
+	int passengerType;
+	bool goingUp;
 	struct list_head passengerList;
 };
 
@@ -74,20 +88,21 @@ struct floor_info{
 	struct list_head queue;
 };
 
-/* Function declarations */
+/* 
+	Function declarations - definitions are in the following
+	files: elevator_module.c
+  *insert file names as files are created*
+*/
 
-//Definitions found in module_data.c - STUBs/syscalls created in elevator_syscalls.c
-int issue_request(int pass_type, int start_floor, int desired_floor);
 int start_elevator(void);
+int issue_request(int pass_type, int start_floor, int desired_floor);
 int stop_elevator(void);
 
-//Definitions found in elevator_passenger.c
 int remove_passengers(void);
 int add_passengers(void);
-int elevator_service(void * info);
+int elevator_service(void);
 
-//Definitions found in elevator_module.c
 int show_elevator_data(struct seq_file *m, void *v);
 int open_elevator(struct inode *inode, struct file *file);
-int __exit exit_elevator(void);
+void __exit exit_elevator(void);
 int __init init_elevator(void);
