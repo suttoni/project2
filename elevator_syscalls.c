@@ -30,7 +30,7 @@ EXPORT_SYMBOL(STUB_stop_elevator);
 
 /* Here, we create the syscall wrappers with asmlinkage */
 
-asmlinkage int sys_issue_request( int pass_type, int start_floor, int desired_floor ){
+asmlinkage long sys_issue_request( int pass_type, int start_floor, int desired_floor ){
 	//This basic structure is found in lab notes "system_calls.pdf"
 	if(STUB_issue_request != NULL)
 		return STUB_issue_request(pass_type, start_floor, desired_floor);
@@ -38,7 +38,7 @@ asmlinkage int sys_issue_request( int pass_type, int start_floor, int desired_fl
 		return -ENOSYS;
 }
 
-asmlinkage int sys_start_elevator( void ){
+asmlinkage long sys_start_elevator( void ){
 	//This basic structure is found in lab notes "system_calls.pdf"
 	if(STUB_start_elevator != NULL)
 		return STUB_start_elevator();
@@ -46,7 +46,7 @@ asmlinkage int sys_start_elevator( void ){
 		return -ENOSYS;
 }
 
-asmlinkage int sys_stop_elevator( void ){
+asmlinkage long sys_stop_elevator( void ){
 	//This basic structure is found in lab notes "system_calls.pdf"
 	if(STUB_stop_elevator != NULL)
 		return STUB_stop_elevator();
