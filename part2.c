@@ -29,6 +29,8 @@ MODULE_DESCRIPTION("my_xTime module");
 static struct timespec start, finish;
 static struct file_operations fops;
 
+static bool flag =  false;
+
 
 
 int my_xtime_read(char *page, char **start, off_t off, int count, int *eof, void *data);
