@@ -111,6 +111,11 @@ int show_elevator_data(struct seq_file *m, void *v){
 	int i = 0;
 
 	//char to check on state of elevator (i.e IDLE or UP)
+	char idle[5] = "IDLE";
+	char up[3] = "UP";
+	char down[5] = "DOWN";
+	char loading[8] = "LOADING";
+	char stopped[8] = "STOPPED";
 	char *stateOfElevator;
 
 	//structs for the list_head position and passenger type
@@ -124,19 +129,19 @@ int show_elevator_data(struct seq_file *m, void *v){
 	//Switch statement to determine the state of the elevator
 	switch (elevator.state){
 			case IDLE:
-				stateOfElevator = "IDLE";
+				stateOfElevator = idle;
 				break;
 			case UP:
-				stateOfElevator = "UP";
+				stateOfElevator = up;
 				break;
 			case DOWN:
-				stateOfElevator = "DOWN";
+				stateOfElevator = down;
 				break;
 			case LOADING:
-				stateOfElevator = "LOADING";
+				stateOfElevator = loading;
 				break;
 			case STOPPED:
-				stateOfElevator = "STOPPED";
+				stateOfElevator = stopped;
 				break;
 	}
 
@@ -153,16 +158,16 @@ int show_elevator_data(struct seq_file *m, void *v){
 	list_for_each(position, &elevator.passengers){
 		info = list_entry(position, struct passenger_info, passenger_list);
 		switch (info->passengerType){
-			case 'A':
+			case 0:
 				adults++;
 				break;
-			case 'C':
+			case 1:
 				children++;
 				break;
-			case 'B':
+			case 2:
 				bellhops++;
 				break;
-			case 'R':
+			case 3:
 				roomService++;
 				break;
 		}
