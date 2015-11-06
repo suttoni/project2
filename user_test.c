@@ -1,6 +1,13 @@
 /* Simple driver program to test elevator-scheduler */
 
 #include <unistd.h>
+#include <sys/syscall.h>
+
+#define __NR_ISSUE_REQUEST 324
+#define __NR_START_ELEVATOR 323
+#define __NR_STOP_ELEVATOR 322
+
+int issue_request
 
 int main(){
 
