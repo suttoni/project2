@@ -9,7 +9,9 @@ extern struct passenger_info passenger;
 extern struct floor_info floors[NUM_FLOORS];
 struct task_struct *elevatorThread;
 
+//these extern declarations are needed for syscalls - do not change
 extern long (*STUB_start_elevator)(void);
+
 long start_elevator(void)
 {
 	int result = 0;
@@ -53,7 +55,9 @@ long start_elevator(void)
 	return result;
 }
 
+//these extern declarations are needed for syscalls - do not change
 extern long (*STUB_issue_request)(int,int,int);
+
 long issue_request(int pass_type, int start_floor, int desired_floor)
 {
 	//Standard checking to make sure all data types are legal
@@ -95,7 +99,9 @@ long issue_request(int pass_type, int start_floor, int desired_floor)
 	return 1;
 }
 
+//these extern declarations are needed for syscalls - do not change
 extern long (*STUB_stop_elevator)(void);
+
 long stop_elevator(void)
 {
 	int result = 0;
@@ -117,7 +123,9 @@ long stop_elevator(void)
 	return result;
 }
 
-
+/* The following functions are called in elevator_module.c 
+   and are meant for the init and exit functions - do not change 
+*/
 void elevator_syscalls_create(void) {
 	STUB_start_elevator =& (start_elevator);
 	STUB_stop_elevator =& (stop_elevator);
