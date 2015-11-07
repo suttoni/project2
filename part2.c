@@ -28,7 +28,7 @@ MODULE_DESCRIPTION("my_xTime module");
 #define PERMS 0644
 #define PARENT NULL
 
-static struct timespec last;
+static struct timespec * last;
 static struct file_operations fops;
 static char *info = NULL;
 static int read_p;
@@ -42,6 +42,11 @@ int my_xtime_open(struct inode *sp_inode, struct file *sp_file) {
 	if(info == NULL)
 		info = kmalloc(sizeof(char) * DEFAULTLEN, __GFP_WAIT | __GFP_IO | __GFP_FS);
 	if (info == NULL) {
+		printk("ERROR");
+		return -ENOMEM;
+	if(last == NULL)
+		start = kmalloc(sizeof(struct timespec), __GFP_WAIT | __GFP_IO | __GFP_FS);
+	if (last == NULL) {
 		printk("ERROR");
 		return -ENOMEM;
 	}
@@ -64,8 +69,8 @@ ssize_t my_xtime_read(struct file *sp_file, size_t size, char __user *buf, loff_
 		}
 		sprintf(info, "current time: %lld.%.9ld\nelapsed time: %lld.%.9ld\n", (long long)currentTime.tv_sec, curTime.tv_nsec);
 	}
-	last.tv_sec = currentTime.tv_sec;
-	last.tv_nsec = currentTime.tv_nsec;
+	last->tv_sec = currentTime.tv_sec;
+	last->tv_nsec = currentTime.tv_nsec;
 	
 	int len = strlen(info);
 	read_p = !read_p;
