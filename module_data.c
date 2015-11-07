@@ -9,6 +9,7 @@ extern struct passenger_info passenger;
 extern struct floor_info floors[NUM_FLOORS];
 struct task_struct *elevatorThread;
 
+//this extern long declaration is needed for syscall - do not remove
 extern long (*STUB_start_elevator)(void);
 long start_elevator(void)
 {
@@ -42,6 +43,7 @@ long start_elevator(void)
 	return result;
 }
 
+//this extern long declaration is needed for syscall - do not remove 
 extern long (*STUB_issue_request)(int,int,int);
 long issue_request(int pass_type, int start_floor, int desired_floor)
 {
@@ -73,6 +75,7 @@ long issue_request(int pass_type, int start_floor, int desired_floor)
 	return 1;
 }
 
+//this extern long declaration is needed for syscall - do not remove
 extern long (*STUB_stop_elevator)(void);
 long stop_elevator(void)
 {
@@ -91,7 +94,8 @@ long stop_elevator(void)
 	return result;
 }
 
-
+/*The following two functions are used in elevator_module.c
+  they are responsible for initializing the syscalls - do not change */
 void elevator_syscalls_create(void) {
 	STUB_start_elevator =& (start_elevator);
 	STUB_stop_elevator =& (stop_elevator);
