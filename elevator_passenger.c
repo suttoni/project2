@@ -1,13 +1,14 @@
 #include "module_data.h"
 
-//External information
-struct task_struct *elevatorThread;
-struct elevator_info elevator;
-struct passenger_info passenger;
-struct floor_info *floors;
 
+//External information
+extern struct task_struct *elevatorThread;
+struct elevator_info elevator;
+struct floor_info floors[NUM_FLOORS];
 extern struct mutex elevatorLock;
 extern struct mutex floorLock;
+
+struct passenger_info passenger;
 
 int remove_passengers(void){
 	int removed = 0;
@@ -17,6 +18,8 @@ int remove_passengers(void){
 	deliveredChildren = 0;
 	deliveredBellhops = 0;
 	deliveredRoomService = 0;
+
+//printf("here in remove_passengers\n");
 
 	/*Go through the list of passengers - as each passenger is unloaded, subtract their weight*/
 	list_for_each(position, &elevator.passengers){
@@ -59,7 +62,7 @@ int remove_passengers(void){
 	/*check if there are any passengers and adjust destination floor*/
 	if (elevator.usedSpace == 0)
 		elevator.destinationFloor = 0;
-
+	
 	return removed;
 }/*end remove_passengers*/
 
@@ -72,6 +75,9 @@ int add_passengers(void){
 	struct passenger_info *info;
 	numChecked = 0;
 
+
+	/*dddddddddddddddddddddddddddddddd*/
+//	printf("here in add_passengers\n")
 	/*Go through the list of passengers - as each passenger is loaded, add their weight*/
 	list_for_each_safe(position, q, &floors[elevator.currentFloor - 1].queue){
 		info = list_entry(position, struct passenger_info, passengerList);
@@ -189,15 +195,15 @@ int add_passengers(void){
 			/*keep checking passengers on that floor until full queue checked or full*/
 			}while(elevator.usedSpace < MAX_PASSENGERS && elevator.usedWeightUnit < MAX_LOAD && numChecked < floors[elevator.currentFloor - 1].queueWaiting);
 		}/*end if*/
-
 	}/*end list_for_each_safe*/	
 	return (added);
 }/*end add_passengers*/
 
-int elevator_service(void){
+int elevator_service(void * data){
 
 	int changes;
-	
+		/*dddddddddddddddddddddddddddddddd*/
+//	printf("here in elevator elevator_service\n")
 	while(elevator.continueRun){
 
 		if(elevator.state == LOADING){
@@ -264,7 +270,7 @@ int elevator_service(void){
 		//Unloading passengers
 		changes = 0;
 		mutex_lock(&elevatorLock);
-		remove_passengers();///////////////////////////////////////////////////////////
+		remove_passengers();
 		mutex_unlock(&elevatorLock);
 		msleep(1000);
 		mutex_lock(&elevatorLock);
