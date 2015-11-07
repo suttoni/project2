@@ -20,6 +20,8 @@ extern struct file *file;
 
 struct mutex elevatorLock = __MUTEX_INITIALIZER(elevatorLock);
 struct mutex floorLock = __MUTEX_INITIALIZER(floorLock);
+extern struct floor_info floors[NUM_FLOORS];
+
 
 /* 
 	Stubs - we get these from our syscall file elevator_syscalls.c and
@@ -30,9 +32,11 @@ extern int(* STUB_issue_request)(int pass_type, int start_floor, int desired_flo
 extern int(* STUB_start_elevator)(void);
 extern int(* STUB_stop_elevator)(void);
 
-int elevator_open(struct inode *inode, struct file *file){
-	return single_open(file, show_elevator_data, NULL);
-}
+//Setup proc entry pointer, and thread variable
+static struct proc_dir_entry *proc;
+static struct task_struct *elevatorThread;
+
+//
 
 //Struct for file_operations
 const struct file_operations elevator_fops = {
@@ -44,20 +48,21 @@ const struct file_operations elevator_fops = {
 
 /* Module function definitions */
 
-int __init init_elevator(void){
+int init_elevator(void){
 	int i = 0;
 
-	STUB_issue_request = &issue_request;
-	STUB_start_elevator = &start_elevator;
-	STUB_stop_elevator = &stop_elevator;
+	mutex_init(&elevatorLock);
+	mutex_init(&floorLock);
 
 	deliveredAdults = 0;
 	deliveredChildren = 0;
 	deliveredBellhops = 0;
 	deliveredRoomService = 0;
 
-	mutex_init(&elevatorLock);
-	mutex_init(&floorLock);
+	proc = proc_create("elevator", 0, NULL, &elevator_fops);
+
+	if(proc == NULL)
+		return -ENOMEM;
 
 	mutex_lock(&elevatorLock);
 	elevator.state = IDLE;
@@ -73,37 +78,40 @@ int __init init_elevator(void){
 		INIT_LIST_HEAD(&floors[i].queue);
 	}
 	mutex_unlock(&floorLock);
-
-	proc_create("elevator", 0, NULL, &elevator_fops);
+	
+	printk("Inserting Elevator\n"); 
+	elevator_syscalls_create();
+	
 	return 0;
 }
 
-void __exit exit_elevator(void){
+void exit_elevator(void){
 
-	STUB_issue_request = NULL;
-	STUB_start_elevator = NULL;
-	STUB_stop_elevator = NULL;
+	int unlocked = 0;
+
+	printk("Removing elevator\n");
+	elevator_syscalls_remove();
+
+	proc_remove(proc);
 
 	mutex_lock(&elevatorLock);
-	elevator.continueRun = false;
-	mutex_unlock(&elevatorLock);
-
-	while(1){
-		//Wait for elevator to stop before removing module
-		mutex_lock(&elevatorLock);
-
-		if(elevator.state == IDLE){
-			mutex_unlock(&elevatorLock);
-			break;
-		}
-		mutex_unlock(&elevatorLock);
-		msleep(1000);
+	
+	if(elevator.state == IDLE || elevator.state == UP || elevator.state == DOWN || elevator.state == LOADING){
+		elevator.continueRun = 0;
+		unlocked = 1;
+		kthread_stop(elevatorThread);
 	}
+
+	if(unlocked == 1)
+		mutex_unlock(&elevatorLock);
 
 	mutex_destroy(&elevatorLock);
 	mutex_destroy(&floorLock);
+}
 
-	remove_proc_entry("elevator", NULL);
+//Proc file open for seq_file
+int elevator_open(struct inode *inode, struct file *file){
+	return single_open(file, show_elevator_data, NULL);
 }
 
 int show_elevator_data(struct seq_file *m, void *v){
@@ -209,16 +217,16 @@ int show_elevator_data(struct seq_file *m, void *v){
 		list_for_each(position, &floors[i].queue){
 			info = list_entry(position, struct passenger_info, passengerList);
 			switch (info->passengerType){
-				case 'A':
+				case 0:
 					adults++;
 					break;
-				case 'C':
+				case 1:
 					children++;
 					break;
-				case 'B':
+				case 2:
 					bellhops++;
 					break;
-				case 'R':
+				case 3:
 					roomService++;
 					break;
 			}		
