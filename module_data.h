@@ -18,6 +18,7 @@
 #include <linux/delay.h>
 #include <linux/list.h>
 #include <linux/mutex.h>
+#include <syscalls.h>
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Sutton");
@@ -32,7 +33,7 @@ MODULE_DESCRIPTION("Data file that contains elevator information");
 
 extern struct elevator_info elevator;
 extern struct passenger_info passenger;
-extern struct floor_info *floors;
+//extern struct floor_info floors[NUM_FLOORS];
 extern int deliveredAdults,
        	   deliveredChildren,
 	       deliveredBellhops,
@@ -69,7 +70,7 @@ struct elevator_info{
 	int destinationFloor;
 	int usedSpace;
 	int usedWeightUnit;
-	bool continueRun;
+	int continueRun;
 	bool goingDown;
 	struct list_head passengers;
 };
@@ -94,15 +95,15 @@ struct floor_info{
   *insert file names as files are created*
 */
 
-int start_elevator(void);
-int issue_request(int pass_type, int start_floor, int desired_floor);
-int stop_elevator(void);
+long start_elevator(void);
+long issue_request(int pass_type, int start_floor, int desired_floor);
+long stop_elevator(void);
 
 int remove_passengers(void);
 int add_passengers(void);
-int elevator_service(void);
+int elevator_service(void * data);
 
 int show_elevator_data(struct seq_file *m, void *v);
-int open_elevator(struct inode *inode, struct file *file);
-void __exit exit_elevator(void);
-int __init init_elevator(void);
+int elevator_open(struct inode *inode, struct file *file);
+int init_elevator(void);
+void exit_elevator(void);
